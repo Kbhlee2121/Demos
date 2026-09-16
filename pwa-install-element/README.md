@@ -110,6 +110,26 @@ button.oninstallresult = (event) => {
 };
 ```
 
+### Diagnose installation problems
+
+Before the user invokes `<install>`, use `isValid` and `invalidReason` to check
+whether it can currently be activated, and `validationstatuschange` to react
+when that state changes. These members are inherited from the [Permission
+Element API](https://wicg.github.io/PEPC/permission-elements.html).
+
+Installation-data failures are instead reported after activation through
+`installresult` with a result of `invalid_data`. The DevTools **Issues** tab may
+also report activation problems and, for same-origin installations, provide
+more detailed diagnostics for `invalid_data`. It does not expose cross-origin
+manifest details.
+
+> [!NOTE]
+> `<install>` also inherits `initialPermissionStatus`, `permissionStatus`,
+> `onpromptaction`, and `onpromptdismiss`, but these members do not determine
+> whether installation can proceed or report its outcome. Use the validation
+> members described above before the user invokes `<install>`, and
+> `installresult` afterward.
+
 ## Test the feature locally
 
 To test the `<install>` element locally, use Microsoft Edge 153 or later, or a matching version of another Chromium-based browser, and enable the **Web App Install Element** experiment:
@@ -177,25 +197,6 @@ You can find the computed ID by going to **Application** > **Manifest** > **Iden
 
 ### Handle installation success and errors
 
-To handle the result of the web app installation process, use the `promptaction`, `promptdismiss`, and `validationstatuschanged` events:
-
-```javascript
-const button = document.getElementById('install-button');
-
-// Listen to the promptaction event to know if the installation succeeded.
-button.addEventListener('promptaction', (event) => {
-  console.log(`Install succeeded`);
-});
-
-// Listen to the promptdismiss event to know if the installation failed.
-button.addEventListener('promptdismiss', (event) => {
-  console.log(`Install failed`);
-});
-
-// Listen to the validationstatuschanged event to detect invalid installation data.
-button.addEventListener('validationstatuschanged', (event) => {
-  if (event.target.invalidReason === 'install_data_invalid') {
-    console.log(event.target.invalidReason);
-  }
-});
-```
+Installation outcomes when using the deprecated `installurl` attribute are
+also reported through the `installresult` event. See
+[Handle installation success and errors](#handle-installation-success-and-errors).
