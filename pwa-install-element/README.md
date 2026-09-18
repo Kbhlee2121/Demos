@@ -81,7 +81,7 @@ installButton.addEventListener('installresult', (event) => {
       console.log('Install was cancelled or could not be completed');
       break;
     case 'invalid_data':
-      console.log('The manifest or manifestId is invalid');
+      console.error('The installation data is invalid');
       break;
   }
 });
@@ -112,23 +112,58 @@ button.oninstallresult = (event) => {
 
 ### Diagnose installation problems
 
-Before the user invokes `<install>`, use `isValid` and `invalidReason` to check
-whether it can currently be activated, and `validationstatuschange` to react
-when that state changes. These members are inherited from the [Permission
-Element API](https://wicg.github.io/PEPC/permission-elements.html).
+The browser can temporarily or permanently prevent an `<install>` element from
+being activated if it doesn't meet presentation and anti-abuse requirements,
+such as being visible, unobscured, and not recently moved. Use the `isValid` and
+`invalidReason` properties to determine whether the element can currently be
+activated and why it is blocked; learn more about using these inherited
+properties and events in the [Permission Element
+API](https://wicg.github.io/PEPC/permission-elements.html) documentation. Listen
+for the `validationstatuschange` event to react when its validity changes:
 
-Installation-data failures are instead reported after activation through
-`installresult` with a result of `invalid_data`. The DevTools **Issues** tab may
-also report activation problems and, for same-origin installations, provide
-more detailed diagnostics for `invalid_data`. It does not expose cross-origin
-manifest details.
+```javascript
+const installButton = document.getElementById('install-button');
+
+function reportValidity() {
+  if (installButton.isValid) {
+    console.log('The install element can be activated');
+  } else {
+    console.warn(`The install element is blocked: ${installButton.invalidReason}`);
+  }
+}
+
+installButton.addEventListener('validationstatuschange', reportValidity);
+reportValidity();
+```
+
+Installation data includes the `manifest` URL, the optional `manifestId`, and
+the fetched web app manifest. Problems such as an invalid URL, a manifest that
+can't be fetched or parsed, or a mismatched app ID are reported after the user
+invokes the element through the `installresult` event with a result of
+`invalid_data`:
+
+```javascript
+installButton.addEventListener('installresult', (event) => {
+  if (event.result === 'invalid_data') {
+    console.error('Check the manifest URL, manifestId, and web app manifest');
+  }
+});
+```
+
+The DevTools **Issues** tab may also report activation problems and, for
+same-origin installations, provide more detailed diagnostics for
+`invalid_data`. It does not expose details about cross-origin installation
+failures.
 
 > [!NOTE]
 > `<install>` also inherits `initialPermissionStatus`, `permissionStatus`,
-> `onpromptaction`, and `onpromptdismiss`, but these members do not determine
-> whether installation can proceed or report its outcome. Use the validation
-> members described above before the user invokes `<install>`, and
-> `installresult` afterward.
+> `onpromptaction`, and `onpromptdismiss`, but these properties and events do
+> not determine whether installation can proceed or report its outcome. Use the
+> validation properties and event described above before the user invokes
+> `<install>`, and `installresult` afterward.
+
+For more information, see [Results, errors, and debuggability](https://github.com/WICG/install-element/blob/main/explainer-manifest-url.md#results-errors-and-debuggability)
+in the `<install>` element explainer.
 
 ## Test the feature locally
 
